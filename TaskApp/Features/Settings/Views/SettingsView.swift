@@ -13,6 +13,16 @@ struct SettingsView: View {
                 Toggle("Mostrar prioridades", isOn: $config.showPriorities)
 #endif
             }
+#if canImport(SwiftData)
+            // Solo en Apple hay dónde elegir; en Linux y Windows las tareas van siempre en JSON.
+            Section(header: Text("Almacenamiento")) {
+                Picker("Guardar las tareas en", selection: $config.storageType) {
+                    ForEach(StorageType.allCases) { type in
+                        Text(type.rawValue).tag(type)
+                    }
+                }
+            }
+#endif
         }
         .navigationTitle("Ajustes")
     }

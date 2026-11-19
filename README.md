@@ -26,3 +26,15 @@ que reexporta SwiftOpenUI, así que `import SwiftUI` funciona sin cambiar el có
 |---|---|---|
 | Base | scheme `TaskApp` | `swift run TaskApp` |
 | Con prioridades | scheme `TaskApp Prioridades` (target con `Prioridades` en *Active Compilation Conditions*) | `swift run --traits Prioridades TaskApp` |
+
+## Almacenamiento (desde la sesión 7)
+
+Las tareas se guardan detrás del protocolo `StorageProvider`, con dos alternativas (solo una activa):
+
+| Alternativa | Dónde | Cómo se elige |
+|---|---|---|
+| JSON | `tasks.json` en la carpeta Documentos | Por defecto, en los tres sistemas |
+| SwiftData | `TaskApp.store` en Application Support | Ajustes → Almacenamiento (solo macOS e iOS) |
+
+SwiftData solo existe en los sistemas de Apple: su código está dentro de `#if canImport(SwiftData)`,
+así que en Linux y Windows no se compila y la app guarda siempre en JSON.

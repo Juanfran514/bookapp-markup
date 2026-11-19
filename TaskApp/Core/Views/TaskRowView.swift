@@ -1,8 +1,10 @@
 import SwiftUI
 
 /// Fila de una tarea. No conoce el ViewModel: recibe los flags y la acción.
+/// Sí conoce la vista del plugin de fechas (acoplamiento que la sesión 8 quita).
 struct TaskRowView: View {
     let task: Task
+    let dueDate: Date?
     let showDueDates: Bool
     let showPriorities: Bool
     let toggleCompletion: () -> Void
@@ -17,9 +19,8 @@ struct TaskRowView: View {
             VStack(alignment: .leading) {
                 Text(task.title)
                     .strikethrough(task.isCompleted)
-                if showDueDates, let dueDate = task.dueDate {
-                    Text("Vence: \(dueDate.formatted(date: .abbreviated, time: .shortened))")
-                        .taskCaption()
+                if showDueDates {
+                    DueDateRowView(date: dueDate)
                 }
 #if Prioridades
                 if showPriorities, let priority = task.priority {

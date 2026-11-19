@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// Feature flags en ejecución: qué características muestra la app.
-/// Es configuración de la aplicación, no datos de las tareas. Cada flag se guarda en
+/// Feature flags en ejecución: qué características muestra la app y dónde guarda las tareas.
+/// Es configuración de la aplicación, no datos de las tareas. Cada valor se guarda en
 /// UserDefaults al cambiar, así que se conserva al cerrar y volver a abrir la app.
 @Observable
 final class AppConfig {
@@ -12,6 +12,10 @@ final class AppConfig {
     var showPriorities: Bool {
         didSet { store(showPriorities, forKey: "showPriorities") }
     }
+    /// Dónde se guardan las tareas. En UserDefaults se guarda su nombre ("JSON", "SwiftData").
+    var storageType: StorageType {
+        didSet { store(storageType.rawValue, forKey: "storageType") }
+    }
 
     @ObservationIgnored private let defaults: UserDefaults
 
@@ -19,9 +23,10 @@ final class AppConfig {
         self.defaults = defaults
         showDueDates = defaults.object(forKey: "showDueDates") as? Bool ?? true
         showPriorities = defaults.object(forKey: "showPriorities") as? Bool ?? true
+        storageType = StorageType(rawValue: defaults.string(forKey: "storageType") ?? "") ?? .json
     }
 
-    private func store(_ value: Bool, forKey key: String) {
+    private func store(_ value: Any, forKey key: String) {
         defaults.set(value, forKey: key)
         // En Linux y Windows, UserDefaults escribe en disco más tarde: lo forzamos ya.
         defaults.synchronize()

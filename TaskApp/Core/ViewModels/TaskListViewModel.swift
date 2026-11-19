@@ -5,7 +5,7 @@ import Observation
 final class TaskListViewModel {
     /// Cada cambio en la lista (marcar, añadir, borrar o editar en el detalle) se guarda.
     var tasks: [Task] = [
-        Task(title: "Preparar clase", dueDate: Date(timeIntervalSince1970: 1_794_700_800), priority: .high),
+        Task(title: "Preparar clase", priority: .high),
         Task(title: "Revisar prácticas", priority: .medium),
         Task(title: "Publicar materiales")
     ] {
@@ -42,8 +42,13 @@ final class TaskListViewModel {
         tasks.append(Task(title: "Tarea de ejemplo"))
     }
 
+    /// Borra una tarea. El ViewModel no sabe qué plugins hay: avisa al registro
+    /// antes y después, y el registro avisa a cada plugin de datos (observador).
     func removeTask(id: UUID) {
+        guard let task = task(id: id) else { return }
+        PluginRegistry.shared.notifyTaskWillBeDeleted(task)
         tasks.removeAll { $0.id == id }
+        PluginRegistry.shared.notifyTaskDidDelete(id: id)
     }
 
     /// La tarea con ese id, si sigue en la lista.
