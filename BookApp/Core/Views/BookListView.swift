@@ -41,9 +41,10 @@ struct BookListView: View {
     }
 
     /// Ancho dinámico de cada una de las 10 celdas para llenar todo el ancho de la estantería.
+    /// Deja un margen mínimo de 2 px para no empujar el ancho mínimo de la ventana en macOS.
     private var cellWidth: Double {
         let gaps = Double(fixedColumns - 1)
-        return max(36.0, ((containerWidth - gaps) / Double(fixedColumns)).rounded(.down))
+        return max(32.0, ((containerWidth - gaps - 2.0) / Double(fixedColumns)).rounded(.down))
     }
 
     private var rowTotalWidth: Double {
@@ -100,7 +101,9 @@ struct BookListView: View {
                         }
                     }
                 }
+                .frame(minWidth: 0, maxWidth: .infinity)
             }
+            .frame(minWidth: 0, maxWidth: .infinity)
             .background(Color.shelfBackground)
             .toolbar {
                 Button(isReordering ? "Listo" : "Reordenar") {
