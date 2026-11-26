@@ -1,10 +1,11 @@
 import Foundation
 import SwiftUI
 
-/// Lomo de un libro en la estantería. Se adapta exactamente al ancho dinámico `cellWidth` de su celda.
+/// Lomo de un libro en la estantería. Mantiene su proporción adaptándose a `cellWidth` y `cellHeight`.
 struct BookRowView: View {
     let book: Book
     let cellWidth: Double
+    let cellHeight: Double
     let dueDate: Date?
     let showDueDates: Bool
     let showPriorities: Bool
@@ -13,21 +14,23 @@ struct BookRowView: View {
 
     var body: some View {
         let innerWidth = max(20.0, cellWidth - 6.0)
+        let titleLength = max(50.0, cellHeight - 54.0)
         ZStack {
+            // Fondo del libro con el título centrado en overlay (no altera el tamaño de la celda
+            // ni comprime el texto tras rotarlo)
             Rectangle()
                 .fill(book.coverColor.color)
-                .shelfFrame(width: cellWidth, height: 150)
-
-            // Título centrado exactamente en mitad del lomo (horizontal y verticalmente)
-            Text(book.title)
-                .font(.caption)
-                .foregroundColor(.white)
-                .strikethrough(book.isRead)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .shelfFrame(width: 96, height: innerWidth)
-                .rotationEffect(.degrees(-90))
-                .shelfFrame(width: innerWidth, height: 96)
+                .shelfFrame(width: cellWidth, height: cellHeight)
+                .overlay(
+                    Text(book.title)
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .strikethrough(book.isRead)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .shelfFrame(width: titleLength, height: innerWidth)
+                        .rotationEffect(.degrees(-90))
+                )
 
             // Controles arriba (marcar leído / indicador de edición) y abajo (fecha / prioridad)
             VStack(spacing: 2) {
@@ -62,9 +65,9 @@ struct BookRowView: View {
 #endif
             }
             .padding(.bottom, 4)
-            .shelfFrame(width: cellWidth, height: 150)
+            .shelfFrame(width: cellWidth, height: cellHeight)
         }
-        .shelfFrame(width: cellWidth, height: 150)
+        .shelfFrame(width: cellWidth, height: cellHeight)
         .clipped()
     }
 }

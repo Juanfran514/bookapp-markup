@@ -21,20 +21,21 @@ struct ShelfDragOverlayView: View {
     let columns: Int
     let rows: Int
     let slotWidth: Double
+    let slotHeight: Double
+    let woodHeight: Double
     let onMove: (UUID, Int, Int) -> Void
 
     @State private var activeDrag: ActiveBookDrag?
 
-    private let slotHeight = 150.0
     private var colStride: Double { slotWidth + 1.0 }
-    private let rowStride = 164.0
+    private var rowStride: Double { slotHeight + woodHeight }
 
     private var totalWidth: Int {
         max(1, Int((slotWidth * Double(columns) + Double(max(0, columns - 1))).rounded()))
     }
 
     private var totalHeight: Int {
-        max(1, Int(Double(rows) * rowStride))
+        max(1, Int((Double(rows) * rowStride).rounded()))
     }
 
     var body: some View {

@@ -40,11 +40,20 @@ struct BookListView: View {
         }
     }
 
-    /// Ancho dinámico de cada una de las 10 celdas para llenar todo el ancho de la estantería.
-    /// Deja un margen mínimo de 2 px para no empujar el ancho mínimo de la ventana en macOS.
+    /// Ancho dinámico de cada celda para rellenar la anchura, manteniendo proporción de lomo de libro (~1 : 2.55).
     private var cellWidth: Double {
         let gaps = Double(fixedColumns - 1)
         return max(32.0, ((containerWidth - gaps - 2.0) / Double(fixedColumns)).rounded(.down))
+    }
+
+    /// Alto proporcional al ancho de la celda para que los libros nunca se deformen.
+    private var cellHeight: Double {
+        (cellWidth * 2.55).rounded()
+    }
+
+    /// Grosor de la balda proporcional al tamaño de los libros.
+    private var woodHeight: Double {
+        max(10.0, (cellWidth * 0.24).rounded())
     }
 
     private var rowTotalWidth: Double {
@@ -53,6 +62,8 @@ struct BookListView: View {
 
     var body: some View {
         let currentCellWidth = cellWidth
+        let currentCellHeight = cellHeight
+        let currentWoodHeight = woodHeight
         let currentRowWidth = rowTotalWidth
         NavigationStack {
             ZStack(alignment: .topLeading) {
@@ -72,18 +83,18 @@ struct BookListView: View {
                                     HStack(alignment: .bottom, spacing: 1) {
                                         ForEach(shelf.cells) { cell in
                                             if let book = cell.book {
-                                                bookItem(book: book, cellWidth: currentCellWidth)
+                                                bookItem(book: book, cellWidth: currentCellWidth, cellHeight: currentCellHeight)
                                             } else {
-                                                emptySlot(cellWidth: currentCellWidth)
+                                                emptySlot(cellWidth: currentCellWidth, cellHeight: currentCellHeight)
                                             }
                                         }
                                     }
-                                    .shelfFrame(width: currentRowWidth, height: 150)
+                                    .shelfFrame(width: currentRowWidth, height: currentCellHeight)
 
-                                    // Balda de la estantería adaptada al ancho completo
+                                    // Balda de la estantería proporcional al tamaño de los libros
                                     Rectangle()
                                         .fill(Color.shelfWood)
-                                        .shelfFrame(width: currentRowWidth, height: 14)
+                                        .shelfFrame(width: currentRowWidth, height: currentWoodHeight)
                                 }
                             }
                         }
@@ -94,6 +105,8 @@ struct BookListView: View {
                                 columns: fixedColumns,
                                 rows: fixedRows,
                                 slotWidth: currentCellWidth,
+                                slotHeight: currentCellHeight,
+                                woodHeight: currentWoodHeight,
                                 onMove: { bookID, targetRow, targetCol in
                                     viewModel.moveBook(id: bookID, toRow: targetRow, toCol: targetCol)
                                 }
@@ -131,21 +144,22 @@ struct BookListView: View {
         }
     }
 
-    /// Hueco vacío de la matriz 2D adaptado al ancho dinámico de celda.
-    private func emptySlot(cellWidth: Double) -> some View {
+    /// Hueco vacío de la matriz 2D con las mismas dimensiones proporcionales que un libro.
+    private func emptySlot(cellWidth: Double, cellHeight: Double) -> some View {
         Rectangle()
             .fill(Color.black.opacity(isReordering ? 0.06 : 0.02))
-            .shelfFrame(width: cellWidth, height: 150)
+            .shelfFrame(width: cellWidth, height: cellHeight)
     }
 
     /// Un libro colocado en la estantería: en modo edición es pasivo (lo arrastra la capa superior);
     /// en modo normal abre su detalle, se puede marcar como leído y tiene menú contextual.
     @ViewBuilder
-    private func bookItem(book: Book, cellWidth: Double) -> some View {
+    private func bookItem(book: Book, cellWidth: Double, cellHeight: Double) -> some View {
         if isReordering {
             BookRowView(
                 book: book,
                 cellWidth: cellWidth,
+                cellHeight: cellHeight,
                 dueDate: dueDates.dueDate(for: book.id),
                 showDueDates: config.showDueDates,
                 showPriorities: config.showPriorities,
@@ -156,6 +170,7 @@ struct BookListView: View {
                 BookRowView(
                     book: book,
                     cellWidth: cellWidth,
+                    cellHeight: cellHeight,
                     dueDate: dueDates.dueDate(for: book.id),
                     showDueDates: config.showDueDates,
                     showPriorities: config.showPriorities,
@@ -168,7 +183,7 @@ struct BookListView: View {
                 }
             }
             .buttonStyle(.plain)
-            .shelfFrame(width: cellWidth, height: 150)
+            .shelfFrame(width: cellWidth, height: cellHeight)
         }
     }
 
