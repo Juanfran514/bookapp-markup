@@ -15,78 +15,89 @@ struct BookListView: View {
     @State private var viewModel: BookListViewModel
     @State private var showingAddBook = false
     @State private var isReordering = false
+    @State private var containerWidth: Double = 650
     /// La configuración la crea la app y llega por el entorno: es la misma que edita Ajustes.
     @Environment(AppConfig.self) private var config
     /// El plugin de fechas también llega por el entorno. La lista le pide la fecha de cada
     /// libro y se la pasa a la fila (el valor) y al detalle (un Binding).
     @Environment(DueDatePlugin.self) private var dueDates
 
-    private let minShelves = BookListViewModel.minShelves
+    private let fixedColumns = BookListViewModel.booksPerShelf
+    private let fixedRows = BookListViewModel.fixedShelves
 
     /// Quien crea la lista decide dónde se guardan los libros.
     init(storageProvider: StorageProvider = JSONStorageProvider()) {
         _viewModel = State(wrappedValue: BookListViewModel(storageProvider: storageProvider))
     }
 
-    private var totalColumns: Int {
-        let maxStoredCol = viewModel.books.compactMap(\.shelfCol).max() ?? -1
-        return max(BookListViewModel.booksPerShelf, maxStoredCol + 2)
-    }
-
-    private var totalShelves: Int {
-        let maxRow = viewModel.books.compactMap(\.shelfRow).max() ?? -1
-        return max(minShelves, maxRow + 2)
-    }
-
-    /// Construye la cuadrícula bidimensional de la estantería (`baldas x columnas`),
-    /// conservando todos los huecos vacíos entre libros.
+    /// Cuadrícula bidimensional fija (`4 baldas x 10 columnas = 40 celdas`).
     private var shelves: [ShelfRow] {
-        let cols = totalColumns
-        return (0..<totalShelves).map { row in
-            let cells = (0..<cols).map { col in
+        (0..<fixedRows).map { row in
+            let cells = (0..<fixedColumns).map { col in
                 ShelfCell(id: col, book: viewModel.book(atRow: row, col: col))
             }
             return ShelfRow(id: row, cells: cells)
         }
     }
 
+    /// Ancho dinámico de cada una de las 10 celdas para llenar todo el ancho de la estantería.
+    private var cellWidth: Double {
+        let gaps = Double(fixedColumns - 1)
+        return max(36.0, ((containerWidth - gaps) / Double(fixedColumns)).rounded(.down))
+    }
+
+    private var rowTotalWidth: Double {
+        cellWidth * Double(fixedColumns) + Double(fixedColumns - 1)
+    }
+
     var body: some View {
-        let cols = totalColumns
-        let rows = totalShelves
+        let currentCellWidth = cellWidth
+        let currentRowWidth = rowTotalWidth
         NavigationStack {
-            ScrollView([.horizontal, .vertical]) {
-                ZStack(alignment: .topLeading) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        ForEach(shelves) { shelf in
-                            VStack(alignment: .leading, spacing: 0) {
-                                HStack(alignment: .bottom, spacing: 1) {
-                                    ForEach(shelf.cells) { cell in
-                                        if let book = cell.book {
-                                            bookItem(book: book)
-                                        } else {
-                                            emptySlot
+            ZStack(alignment: .topLeading) {
+                // Sensor de anchura sin vistas hijas que dependan de @Environment,
+                // compatible tanto con GTK4/Win32 (SwiftOpenUI) como con macOS/iOS.
+                GeometryReader { geo in
+                    let measured = Double(geo.size.width)
+                    let _ = updateWidthIfNeeded(measured)
+                    Color.clear
+                }
+
+                ScrollView {
+                    ZStack(alignment: .topLeading) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(shelves) { shelf in
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack(alignment: .bottom, spacing: 1) {
+                                        ForEach(shelf.cells) { cell in
+                                            if let book = cell.book {
+                                                bookItem(book: book, cellWidth: currentCellWidth)
+                                            } else {
+                                                emptySlot(cellWidth: currentCellWidth)
+                                            }
                                         }
                                     }
-                                }
-                                .frame(height: 150)
+                                    .shelfFrame(width: currentRowWidth, height: 150)
 
-                                // Balda de la estantería
-                                Rectangle()
-                                    .fill(Color.shelfWood)
-                                    .frame(height: 14)
+                                    // Balda de la estantería adaptada al ancho completo
+                                    Rectangle()
+                                        .fill(Color.shelfWood)
+                                        .shelfFrame(width: currentRowWidth, height: 14)
+                                }
                             }
                         }
-                    }
 
-                    if isReordering {
-                        ShelfDragOverlayView(
-                            books: viewModel.books,
-                            columns: cols,
-                            rows: rows,
-                            onMove: { bookID, targetRow, targetCol in
-                                viewModel.moveBook(id: bookID, toRow: targetRow, toCol: targetCol, maxColumns: cols)
-                            }
-                        )
+                        if isReordering {
+                            ShelfDragOverlayView(
+                                books: viewModel.books,
+                                columns: fixedColumns,
+                                rows: fixedRows,
+                                slotWidth: currentCellWidth,
+                                onMove: { bookID, targetRow, targetCol in
+                                    viewModel.moveBook(id: bookID, toRow: targetRow, toCol: targetCol)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -108,19 +119,30 @@ struct BookListView: View {
         }
     }
 
-    /// Hueco vacío de la matriz 2D (ligeramente visible en modo edición para guiar el arrastre).
-    private var emptySlot: some View {
-        Color.black.opacity(isReordering ? 0.04 : 0.0)
-            .frame(width: 58, height: 150)
+    private func updateWidthIfNeeded(_ measured: Double) {
+        guard measured > 100, abs(measured - containerWidth) >= 2.0 else { return }
+        DispatchQueue.main.async {
+            if abs(measured - containerWidth) >= 2.0 {
+                containerWidth = measured
+            }
+        }
+    }
+
+    /// Hueco vacío de la matriz 2D adaptado al ancho dinámico de celda.
+    private func emptySlot(cellWidth: Double) -> some View {
+        Rectangle()
+            .fill(Color.black.opacity(isReordering ? 0.06 : 0.02))
+            .shelfFrame(width: cellWidth, height: 150)
     }
 
     /// Un libro colocado en la estantería: en modo edición es pasivo (lo arrastra la capa superior);
     /// en modo normal abre su detalle, se puede marcar como leído y tiene menú contextual.
     @ViewBuilder
-    private func bookItem(book: Book) -> some View {
+    private func bookItem(book: Book, cellWidth: Double) -> some View {
         if isReordering {
             BookRowView(
                 book: book,
+                cellWidth: cellWidth,
                 dueDate: dueDates.dueDate(for: book.id),
                 showDueDates: config.showDueDates,
                 showPriorities: config.showPriorities,
@@ -130,6 +152,7 @@ struct BookListView: View {
             NavigationLink(destination: BookDetailView(book: binding(for: book), dueDate: dueDateBinding(for: book))) {
                 BookRowView(
                     book: book,
+                    cellWidth: cellWidth,
                     dueDate: dueDates.dueDate(for: book.id),
                     showDueDates: config.showDueDates,
                     showPriorities: config.showPriorities,
@@ -142,6 +165,7 @@ struct BookListView: View {
                 }
             }
             .buttonStyle(.plain)
+            .shelfFrame(width: cellWidth, height: 150)
         }
     }
 

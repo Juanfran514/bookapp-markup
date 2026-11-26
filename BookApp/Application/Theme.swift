@@ -1,4 +1,7 @@
 import SwiftUI
+#if !canImport(SwiftOpenUI) && canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 // El tema de la app: colores y estilos en un solo sitio, añadidos con extensiones.
 // Para cambiar el aspecto se toca este fichero, no las vistas.
@@ -28,6 +31,15 @@ extension View {
     /// o con otro color: `.bookCaption(color: .red)`.
     func bookCaption(color: Color = .secondary) -> some View {
         modifier(CaptionStyle(color: color))
+    }
+
+    /// Frame con dimensiones en `Double` compatible tanto con SwiftUI de Apple (`CGFloat`) como con SwiftOpenUI (`Double`).
+    func shelfFrame(width: Double, height: Double) -> some View {
+#if !canImport(SwiftOpenUI)
+        self.frame(width: CGFloat(width), height: CGFloat(height))
+#else
+        self.frame(width: width, height: height)
+#endif
     }
 }
 
