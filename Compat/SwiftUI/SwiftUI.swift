@@ -1,6 +1,5 @@
-// Módulo "SwiftUI" solo para Linux y Windows: reexporta SwiftOpenUI, como el SwiftUI de
+// Módulo "SwiftUI" para Linux y Windows: reexporta SwiftOpenUI, como el SwiftUI de
 // Apple reexporta Foundation, y arranca la app con el backend del sistema.
-#if os(Linux) || os(Windows)
 @_exported import Foundation
 @_exported import SwiftOpenUI
 
@@ -17,7 +16,8 @@ extension App {
         GTK4Backend().run(Self.self)
         #elseif canImport(BackendWin32)
         Win32Backend().run(Self.self)
+        #else
+        print("En macOS abre BookApp.xcodeproj en Xcode (no Package.swift) para ejecutar la app con el SwiftUI de Apple.")
         #endif
     }
 }
-#endif

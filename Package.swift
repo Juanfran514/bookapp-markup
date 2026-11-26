@@ -1,73 +1,18 @@
 // swift-tools-version: 6.2
-// Paquete multiplataforma: mantiene siempre SwiftOpenUI en el paquete.
-// En Linux y Windows usa Compat/SwiftUI (GTK4 / Win32); en macOS usa SwiftUI de Apple
-// conservando la dependencia de SwiftOpenUI para que Xcode y SwiftPM la detecten.
+// Paquete para Linux y Windows. Compila la MISMA carpeta BookApp/ que usa Xcode
+// (en Mac se abre BookApp.xcodeproj y se usa el SwiftUI de Apple).
 import PackageDescription
 
-let sharedSwiftSettings: [SwiftSetting] = [
-    .swiftLanguageMode(.v5),
-    .defaultIsolation(MainActor.self),
-    .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-    .enableUpcomingFeature("InferIsolatedConformances"),
-    .enableUpcomingFeature("MemberImportVisibility"),
-]
-
 #if os(Linux)
-let packageTargets: [Target] = [
-    .target(
-        name: "SwiftUI",
-        dependencies: [
-            .product(name: "SwiftOpenUI", package: "SwiftOpenUI"),
-            .product(name: "BackendGTK4", package: "SwiftOpenUI"),
-        ],
-        path: "Compat/SwiftUI"
-    ),
-    .executableTarget(
-        name: "BookApp",
-        dependencies: ["SwiftUI"],
-        path: "BookApp",
-        exclude: ["Assets.xcassets"],
-        swiftSettings: sharedSwiftSettings
-    ),
-]
+let backend: Target.Dependency = .product(name: "BackendGTK4", package: "SwiftOpenUI")
 #elseif os(Windows)
-let packageTargets: [Target] = [
-    .target(
-        name: "SwiftUI",
-        dependencies: [
-            .product(name: "SwiftOpenUI", package: "SwiftOpenUI"),
-            .product(name: "BackendWin32", package: "SwiftOpenUI"),
-        ],
-        path: "Compat/SwiftUI"
-    ),
-    .executableTarget(
-        name: "BookApp",
-        dependencies: ["SwiftUI"],
-        path: "BookApp",
-        exclude: ["Assets.xcassets"],
-        swiftSettings: sharedSwiftSettings
-    ),
-]
+let backend: Target.Dependency = .product(name: "BackendWin32", package: "SwiftOpenUI")
 #else
-let packageTargets: [Target] = [
-    .executableTarget(
-        name: "BookApp",
-        dependencies: [
-            .product(name: "SwiftOpenUI", package: "SwiftOpenUI"),
-        ],
-        path: "BookApp",
-        exclude: ["Assets.xcassets"],
-        swiftSettings: sharedSwiftSettings
-    ),
-]
+let backend: Target.Dependency? = nil
 #endif
 
 let package = Package(
     name: "BookApp",
-    platforms: [
-        .macOS(.v14),
-        .iOS(.v17),
-    ],
     // Productos de la línea: cada trait activo es una variable de compilación (#if Prioridades).
     // En Xcode, el mismo papel lo cumple el target «BookApp Prioridades».
     traits: [
@@ -76,5 +21,26 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/uallps/SwiftOpenUI.git", branch: "uallps"),
     ],
-    targets: packageTargets
+    targets: [
+        // Sustituye al SwiftUI de Apple: `import SwiftUI` trae SwiftOpenUI y su backend.
+        .target(
+            name: "SwiftUI",
+            dependencies: [.product(name: "SwiftOpenUI", package: "SwiftOpenUI")] + [backend].compactMap { $0 },
+            path: "Compat/SwiftUI"
+        ),
+        // Mismos ajustes de Swift que el proyecto de Xcode.
+        .executableTarget(
+            name: "BookApp",
+            dependencies: ["SwiftUI"],
+            path: "BookApp",
+            exclude: ["Assets.xcassets"],
+            swiftSettings: [
+                .swiftLanguageMode(.v5),
+                .defaultIsolation(MainActor.self),
+                .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+                .enableUpcomingFeature("InferIsolatedConformances"),
+                .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+    ]
 )

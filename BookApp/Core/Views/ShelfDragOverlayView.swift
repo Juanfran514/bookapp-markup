@@ -1,5 +1,8 @@
 import Foundation
 import SwiftUI
+#if !canImport(SwiftOpenUI) && canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 private struct ActiveBookDrag {
     let book: Book
@@ -35,7 +38,7 @@ struct ShelfDragOverlayView: View {
     }
 
     var body: some View {
-#if os(macOS) || os(iOS)
+#if !canImport(SwiftOpenUI)
         Canvas { context, _ in
             guard let drag = activeDrag else { return }
             drawAppleDragPreview(drag, in: &context)
@@ -164,7 +167,7 @@ struct ShelfDragOverlayView: View {
 
     // MARK: - Dibujo en Canvas
 
-#if os(macOS) || os(iOS)
+#if !canImport(SwiftOpenUI)
     private func drawAppleDragPreview(_ drag: ActiveBookDrag, in context: inout GraphicsContext) {
         let originRect = CGRect(
             x: Double(drag.startCol) * colStride,
@@ -173,7 +176,7 @@ struct ShelfDragOverlayView: View {
             height: slotHeight
         )
         // Hueco de origen atenuado
-        context.fill(Path(originRect), with: .color(Color.shelfBackground.opacity(0.75)))
+        context.fill(Path(originRect), with: GraphicsContext.Shading.color(Color.shelfBackground.opacity(0.75)))
 
         // Previsualización iluminada con bordes brillantes en la celda destino
         let tx = Double(drag.targetCol) * colStride
@@ -183,21 +186,21 @@ struct ShelfDragOverlayView: View {
 
         context.fill(
             Path(targetRect),
-            with: .color(Color(red: rgb.r, green: rgb.g, blue: rgb.b).opacity(0.28))
+            with: GraphicsContext.Shading.color(Color(red: rgb.r, green: rgb.g, blue: rgb.b).opacity(0.28))
         )
         context.stroke(
             Path(CGRect(x: tx - 2, y: ty - 2, width: slotWidth + 4, height: slotHeight + 4)),
-            with: .color(Color(red: 1.0, green: 0.90, blue: 0.35).opacity(0.45)),
+            with: GraphicsContext.Shading.color(Color(red: 1.0, green: 0.90, blue: 0.35).opacity(0.45)),
             lineWidth: 6
         )
         context.stroke(
             Path(targetRect),
-            with: .color(Color(red: 1.0, green: 0.96, blue: 0.62).opacity(0.95)),
+            with: GraphicsContext.Shading.color(Color(red: 1.0, green: 0.96, blue: 0.62).opacity(0.95)),
             lineWidth: 3
         )
         context.stroke(
             Path(CGRect(x: tx + 1.5, y: ty + 1.5, width: slotWidth - 3, height: slotHeight - 3)),
-            with: .color(Color.white.opacity(0.95)),
+            with: GraphicsContext.Shading.color(Color.white.opacity(0.95)),
             lineWidth: 1.5
         )
 
@@ -207,16 +210,16 @@ struct ShelfDragOverlayView: View {
         let shadowRect = CGRect(x: fx + 6, y: fy + 8, width: slotWidth, height: slotHeight)
         let floatingRect = CGRect(x: fx, y: fy, width: slotWidth, height: slotHeight)
 
-        context.fill(Path(shadowRect), with: .color(Color.black.opacity(0.28)))
+        context.fill(Path(shadowRect), with: GraphicsContext.Shading.color(Color.black.opacity(0.28)))
         context.fill(
             Path(floatingRect),
-            with: .color(Color(red: rgb.r, green: rgb.g, blue: rgb.b).opacity(0.94))
+            with: GraphicsContext.Shading.color(Color(red: rgb.r, green: rgb.g, blue: rgb.b).opacity(0.94))
         )
         context.fill(
             Path(CGRect(x: fx, y: fy, width: 6, height: slotHeight)),
-            with: .color(Color.white.opacity(0.18))
+            with: GraphicsContext.Shading.color(Color.white.opacity(0.18))
         )
-        context.stroke(Path(floatingRect), with: .color(Color.white.opacity(0.9)), lineWidth: 2)
+        context.stroke(Path(floatingRect), with: GraphicsContext.Shading.color(Color.white.opacity(0.9)), lineWidth: 2)
     }
 #else
     private func drawOpenUIDragPreview(_ drag: ActiveBookDrag, in context: DrawingContext) {

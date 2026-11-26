@@ -1,8 +1,5 @@
 import Foundation
 import SwiftUI
-#if os(macOS)
-import AppKit
-#endif
 
 @main
 struct BookApp: App {
@@ -16,17 +13,6 @@ struct BookApp: App {
         let dueDates = DueDatePlugin()
         PluginRegistry.shared.register(dueDates)
         _dueDates = State(wrappedValue: dueDates)
-#if os(macOS)
-        // Si se ejecuta desde Package.swift (ejecutable sin .app bundle), configuramos
-        // la política regular antes del bucle principal para que se abra la ventana.
-        if Bundle.main.bundleURL.pathExtension != "app" {
-            NSApplication.shared.setActivationPolicy(.regular)
-            DispatchQueue.main.async {
-                NSApplication.shared.activate(ignoringOtherApps: true)
-                NSApplication.shared.windows.first?.makeKeyAndOrderFront(nil)
-            }
-        }
-#endif
     }
 
     var body: some Scene {
