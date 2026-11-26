@@ -34,12 +34,12 @@ struct ShelfDragOverlayView: View {
     }
 
     var body: some View {
-#if os(macOS) || os(iOS)
+#if !canImport(SwiftOpenUI)
         Canvas { context, _ in
             guard let drag = activeDrag else { return }
             drawAppleDragPreview(drag, in: &context)
         }
-        .frame(width: Double(totalWidth), height: Double(totalHeight))
+        .frame(width: CGFloat(totalWidth), height: CGFloat(totalHeight))
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 3)
@@ -163,7 +163,7 @@ struct ShelfDragOverlayView: View {
 
     // MARK: - Dibujo en Canvas
 
-#if os(macOS) || os(iOS)
+#if !canImport(SwiftOpenUI)
     private func drawAppleDragPreview(_ drag: ActiveBookDrag, in context: inout GraphicsContext) {
         let originRect = CGRect(
             x: Double(drag.startCol) * colStride,
@@ -219,6 +219,7 @@ struct ShelfDragOverlayView: View {
     }
 #else
     private func drawOpenUIDragPreview(_ drag: ActiveBookDrag, in context: DrawingContext) {
+#if canImport(BackendGTK4) || canImport(BackendWin32)
         let ox = Double(drag.startCol) * colStride
         let oy = Double(drag.startRow) * rowStride
 
@@ -277,6 +278,7 @@ struct ShelfDragOverlayView: View {
         context.setLineWidth(2)
         context.rectangle(x: fx, y: fy, width: slotWidth, height: slotHeight)
         context.stroke()
+#endif
     }
 #endif
 }

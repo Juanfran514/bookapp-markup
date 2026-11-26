@@ -13,6 +13,7 @@ let backend: Target.Dependency? = nil
 
 let package = Package(
     name: "BookApp",
+    platforms: [.macOS(.v14), .iOS(.v17)],
     // Productos de la línea: cada trait activo es una variable de compilación (#if Prioridades).
     // En Xcode, el mismo papel lo cumple el target «BookApp Prioridades».
     traits: [
