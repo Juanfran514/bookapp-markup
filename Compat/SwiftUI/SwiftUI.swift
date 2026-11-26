@@ -1,5 +1,6 @@
-// Módulo "SwiftUI" para Linux y Windows: reexporta SwiftOpenUI, como el SwiftUI de
+// Módulo "SwiftUI" solo para Linux y Windows: reexporta SwiftOpenUI, como el SwiftUI de
 // Apple reexporta Foundation, y arranca la app con el backend del sistema.
+#if os(Linux) || os(Windows)
 @_exported import Foundation
 @_exported import SwiftOpenUI
 
@@ -19,3 +20,4 @@ extension App {
         #endif
     }
 }
+#endif
