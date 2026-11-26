@@ -1,4 +1,8 @@
+import Foundation
 import SwiftUI
+#if os(macOS) && !canImport(SwiftOpenUI)
+import AppKit
+#endif
 
 @main
 struct BookApp: App {
@@ -12,6 +16,16 @@ struct BookApp: App {
         let dueDates = DueDatePlugin()
         PluginRegistry.shared.register(dueDates)
         _dueDates = State(wrappedValue: dueDates)
+#if os(macOS) && !canImport(SwiftOpenUI)
+        // Si se ejecuta en Mac como ejecutable de SwiftPM (Package.swift) en vez de .app,
+        // activamos la política de ventana regular para que macOS muestre la ventana en primer plano.
+        if Bundle.main.bundleURL.pathExtension != "app" {
+            DispatchQueue.main.async {
+                NSApplication.shared.setActivationPolicy(.regular)
+                NSApplication.shared.activate(ignoringOtherApps: true)
+            }
+        }
+#endif
     }
 
     var body: some Scene {

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 private struct ShelfCell: Identifiable {

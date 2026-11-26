@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// Lomo de un libro en la estantería. No conoce el ViewModel: recibe los flags y la acción.
