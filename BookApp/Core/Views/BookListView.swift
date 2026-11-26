@@ -51,9 +51,9 @@ struct BookListView: View {
         (cellWidth * 2.55).rounded()
     }
 
-    /// Grosor de la balda proporcional al tamaño de los libros.
+    /// Grosor estilizado y moderno de cada balda flotante.
     private var woodHeight: Double {
-        max(10.0, (cellWidth * 0.24).rounded())
+        max(8.0, (cellWidth * 0.16).rounded())
     }
 
     private var rowTotalWidth: Double {
@@ -91,10 +91,12 @@ struct BookListView: View {
                                     }
                                     .shelfFrame(width: currentRowWidth, height: currentCellHeight)
 
-                                    // Balda de la estantería proporcional al tamaño de los libros
+                                    // Balda minimalista flotante con esquinas redondeadas y sombra suave
                                     Rectangle()
-                                        .fill(Color.shelfWood)
+                                        .fill(config.shelfWoodColor)
                                         .shelfFrame(width: currentRowWidth, height: currentWoodHeight)
+                                        .cornerRadius(5)
+                                        .shadow(radius: 3, y: 2)
                                 }
                             }
                         }
@@ -107,6 +109,7 @@ struct BookListView: View {
                                 slotWidth: currentCellWidth,
                                 slotHeight: currentCellHeight,
                                 woodHeight: currentWoodHeight,
+                                backgroundRGB: config.shelfBgRGB,
                                 onMove: { bookID, targetRow, targetCol in
                                     viewModel.moveBook(id: bookID, toRow: targetRow, toCol: targetCol)
                                 }
@@ -117,7 +120,7 @@ struct BookListView: View {
                 .frame(minWidth: 0, maxWidth: .infinity)
             }
             .frame(minWidth: 0, maxWidth: .infinity)
-            .background(Color.shelfBackground)
+            .background(config.shelfBackgroundColor)
             .toolbar {
                 Button(isReordering ? "Listo" : "Reordenar") {
                     isReordering.toggle()
@@ -144,11 +147,15 @@ struct BookListView: View {
         }
     }
 
-    /// Hueco vacío de la matriz 2D con las mismas dimensiones proporcionales que un libro.
+    /// Hueco vacío de la matriz 2D (limpio en lectura, tarjeta guía redondeada en modo edición).
     private func emptySlot(cellWidth: Double, cellHeight: Double) -> some View {
-        Rectangle()
-            .fill(Color.black.opacity(isReordering ? 0.06 : 0.02))
-            .shelfFrame(width: cellWidth, height: cellHeight)
+        ZStack(alignment: .bottom) {
+            Rectangle()
+                .fill(isReordering ? config.shelfWoodColor.opacity(0.35) : Color.clear)
+                .shelfFrame(width: max(24.0, cellWidth - 4.0), height: max(60.0, cellHeight - 4.0))
+                .cornerRadius(8)
+        }
+        .shelfFrame(width: cellWidth, height: cellHeight)
     }
 
     /// Un libro colocado en la estantería: en modo edición es pasivo (lo arrastra la capa superior);

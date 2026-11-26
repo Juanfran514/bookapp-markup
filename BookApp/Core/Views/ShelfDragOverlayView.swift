@@ -23,6 +23,7 @@ struct ShelfDragOverlayView: View {
     let slotWidth: Double
     let slotHeight: Double
     let woodHeight: Double
+    let backgroundRGB: (r: Double, g: Double, b: Double)
     let onMove: (UUID, Int, Int) -> Void
 
     @State private var activeDrag: ActiveBookDrag?
@@ -177,7 +178,12 @@ struct ShelfDragOverlayView: View {
             height: slotHeight
         )
         // Hueco de origen atenuado
-        context.fill(Path(originRect), with: GraphicsContext.Shading.color(Color.shelfBackground.opacity(0.75)))
+        context.fill(
+            Path(originRect),
+            with: GraphicsContext.Shading.color(
+                Color(red: backgroundRGB.r, green: backgroundRGB.g, blue: backgroundRGB.b).opacity(0.82)
+            )
+        )
 
         // Previsualización iluminada con bordes brillantes en la celda destino
         let tx = Double(drag.targetCol) * colStride
@@ -229,7 +235,7 @@ struct ShelfDragOverlayView: View {
         let oy = Double(drag.startRow) * rowStride
 
         // 1. Hueco de origen atenuado (el libro se ha levantado de aquí)
-        context.setColor(r: 0.96, g: 0.95, b: 0.85, a: 0.78)
+        context.setColor(r: backgroundRGB.r, g: backgroundRGB.g, b: backgroundRGB.b, a: 0.82)
         context.rectangle(x: ox, y: oy, width: slotWidth, height: slotHeight)
         context.fill()
 
