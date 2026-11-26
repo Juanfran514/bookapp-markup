@@ -35,7 +35,7 @@ struct ShelfDragOverlayView: View {
     }
 
     var body: some View {
-#if !canImport(SwiftOpenUI)
+#if os(macOS) || os(iOS)
         Canvas { context, _ in
             guard let drag = activeDrag else { return }
             drawAppleDragPreview(drag, in: &context)
@@ -164,7 +164,7 @@ struct ShelfDragOverlayView: View {
 
     // MARK: - Dibujo en Canvas
 
-#if !canImport(SwiftOpenUI)
+#if os(macOS) || os(iOS)
     private func drawAppleDragPreview(_ drag: ActiveBookDrag, in context: inout GraphicsContext) {
         let originRect = CGRect(
             x: Double(drag.startCol) * colStride,

@@ -1,7 +1,7 @@
 // swift-tools-version: 6.2
-// Paquete multiplataforma:
-// - En macOS/iOS usa directamente el SwiftUI nativo de Apple (tanto desde Package.swift como desde BookApp.xcodeproj).
-// - En Linux y Windows usa SwiftOpenUI a través de Compat/SwiftUI.
+// Paquete multiplataforma: mantiene siempre SwiftOpenUI en el paquete.
+// En Linux y Windows usa Compat/SwiftUI (GTK4 / Win32); en macOS usa SwiftUI de Apple
+// conservando la dependencia de SwiftOpenUI para que Xcode y SwiftPM la detecten.
 import PackageDescription
 
 let sharedSwiftSettings: [SwiftSetting] = [
@@ -13,9 +13,6 @@ let sharedSwiftSettings: [SwiftSetting] = [
 ]
 
 #if os(Linux)
-let packageDependencies: [Package.Dependency] = [
-    .package(url: "https://github.com/uallps/SwiftOpenUI.git", branch: "uallps"),
-]
 let packageTargets: [Target] = [
     .target(
         name: "SwiftUI",
@@ -34,9 +31,6 @@ let packageTargets: [Target] = [
     ),
 ]
 #elseif os(Windows)
-let packageDependencies: [Package.Dependency] = [
-    .package(url: "https://github.com/uallps/SwiftOpenUI.git", branch: "uallps"),
-]
 let packageTargets: [Target] = [
     .target(
         name: "SwiftUI",
@@ -55,10 +49,12 @@ let packageTargets: [Target] = [
     ),
 ]
 #else
-let packageDependencies: [Package.Dependency] = []
 let packageTargets: [Target] = [
     .executableTarget(
         name: "BookApp",
+        dependencies: [
+            .product(name: "SwiftOpenUI", package: "SwiftOpenUI"),
+        ],
         path: "BookApp",
         exclude: ["Assets.xcassets"],
         swiftSettings: sharedSwiftSettings
@@ -77,6 +73,8 @@ let package = Package(
     traits: [
         .trait(name: "Prioridades", description: "Característica opcional: prioridad del libro"),
     ],
-    dependencies: packageDependencies,
+    dependencies: [
+        .package(url: "https://github.com/uallps/SwiftOpenUI.git", branch: "uallps"),
+    ],
     targets: packageTargets
 )
