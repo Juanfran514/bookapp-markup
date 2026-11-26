@@ -205,6 +205,7 @@ struct RGBColorWheelPickerView: View {
 
     let title: String
     let onSave: (Double, Double, Double) -> Void
+    var onCancel: () -> Void = {}
 
     @State private var hue: Double
     @State private var saturation: Double
@@ -213,10 +214,12 @@ struct RGBColorWheelPickerView: View {
     init(
         title: String,
         initialRGB: (r: Double, g: Double, b: Double),
-        onSave: @escaping (Double, Double, Double) -> Void
+        onSave: @escaping (Double, Double, Double) -> Void,
+        onCancel: @escaping () -> Void = {}
     ) {
         self.title = title
         self.onSave = onSave
+        self.onCancel = onCancel
         let hsv = Self.rgbToHSV(r: initialRGB.r, g: initialRGB.g, b: initialRGB.b)
         _hue = State(wrappedValue: hsv.h)
         _saturation = State(wrappedValue: hsv.s)
@@ -273,6 +276,7 @@ struct RGBColorWheelPickerView: View {
 
             HStack {
                 Button("Cancelar") {
+                    onCancel()
                     dismiss()
                 }
                 Spacer()
